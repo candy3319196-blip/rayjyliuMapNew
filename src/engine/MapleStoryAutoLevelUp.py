@@ -43,6 +43,7 @@ from src.states.near_rune import NearRuneState
 from src.states.solving_rune import SolvingRuneState
 from src.states.auxiliary import AuxiliaryState
 from src.states.patrol import PatrolState
+from src.states.anti_cheat import AntiCheatState
 
 class MapleStoryAutoBot:
     '''
@@ -128,6 +129,9 @@ class MapleStoryAutoBot:
         self.fsm.add_state(SolvingRuneState("solving_rune", self))
         self.fsm.add_state(AuxiliaryState  ("aux"         , self))
         self.fsm.add_state(PatrolState     ("patrol"      , self))
+        # Talery anti-cheat state (placeholder, enabled via config)
+        self.fsm.add_state(AntiCheatState  ("anti_cheat"  , self))
+        # Rune transitions (only active when rune.enable == True)
         self.fsm.add_transition("hunting", "finding_rune") # When saw a "Rune has created" messgae
         self.fsm.add_transition("finding_rune", "hunting") # After finding rune timeout
         self.fsm.add_transition("finding_rune", "near_rune") # When detect a nearby rune
@@ -135,6 +139,9 @@ class MapleStoryAutoBot:
         self.fsm.add_transition("near_rune", "finding_rune") # After rune solving timeout
         self.fsm.add_transition("near_rune", "solving_rune") # When enter the arrow minimap
         self.fsm.add_transition("solving_rune", "hunting") # After rune solving
+        # Talery anti-cheat transitions (placeholder, actual trigger in hunting.py)
+        self.fsm.add_transition("hunting", "anti_cheat")
+        self.fsm.add_transition("anti_cheat", "hunting")
         self.fsm.set_init_state("hunting")
 
     def update_signals(self, image_debug_signal, route_map_viz_signal):

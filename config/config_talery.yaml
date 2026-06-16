@@ -1,0 +1,20 @@
+# ====== Talery Server Configuration ======
+# This config overrides config_default.yaml for Talery server
+# Run with: python -m src.main (then select config_talery.yaml in UI)
+# Or: python -m src.engine.MapleStoryAutoLevelUp --cfg talery
+
+system:
+  server: "Talery"         # 服务器标识
+
+game_window:
+  title: "TO_BE_DETERMINED"   # ⚠️ 待确认 Talery 窗口标题 (阶段一)
+  size: [693, 1282]           # ⚠️ 待确认分辨率 [高, 宽] (阶段一)
+
+ui_coords:
+  ui_y_start: 610             # ⚠️ 待测量 (阶段一)
+
+rune:
+  enable: false               # 🚫 Talery 无符文系统，完全关闭
+
+talery_anti_cheat:
+  enable: false               # 🚫 待实际遇到校验机制后再开启并填入参数
