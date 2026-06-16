@@ -1,2 +1,5 @@
+health_monitor:
+  add_hp_percent: 0
+  add_mp_percent: 0
 key:
   directional_attack: ''
