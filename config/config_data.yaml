@@ -1,59 +1,62 @@
-# Translation from English to Chinese
+# Translation from English to Simplified Chinese
 eng_to_cn:
   # map
-  ant_cave_2: 螞蟻洞2
-  cloud_balcony: 雲彩露臺
-  dragon_territory: 魔龍領地
+  ant_cave_2: 蚂蚁洞2
+  cloud_balcony: 云彩露台
+  dragon_territory: 魔龙领地
   empty_house: 空屋
   fire_land_1: 火焰之地1
   fire_land_2: 火焰之地2
-  first_barrack: 第一軍營
-  land_of_wild_boar: 黑肥肥領土
-  lost_time_1: 遺失的時間1
-  monkey_swamp_3: 猴子沼澤地3
+  first_barrack: 第一军营
+  land_of_wild_boar: 黑肥肥领土
+  lost_time_1: 遗失的时间1
+  monkey_swamp_3: 猴子沼泽地3
   mushroom_hills: 菇菇山丘
-  north_forest_training_ground_2: 北部森林訓練場2
-  north_forest_training_ground_8: 北部森林訓練場8
+  north_forest_training_ground_2: 北部森林训练场2
+  north_forest_training_ground_8: 北部森林训练场8
   pig_shores: 肥肥海岸
-  the_path_of_time_1_for_mage: 時間之路1(需瞬移)
-  garden_of_green_2: 藍光庭園2
-  garden_of_red_2: 紅光庭園2
-  foggy_forest_for_mage: 濃霧森林(需瞬移)
-  101_2f_east: 時尚大道西部區域
-  black_mountain: 烏山深處
-  disposed_flower_garden: 暗影花園
-  mu_Lung_wild_bear_area_2: 野熊的領土2
+  the_path_of_time_1_for_mage: 时间之路1(需瞬移)
+  garden_of_green_2: 蓝光庭园2
+  garden_of_red_2: 红光庭园2
+  foggy_forest_for_mage: 浓雾森林(需瞬移)
+  101_2f_east: 时尚大道西部区域
+  black_mountain: 乌山深处
+  disposed_flower_garden: 暗影花园
+  mu_Lung_wild_bear_area_2: 野熊的领土2
   # monster
   zombie_lupin: 天使猴
   black_axe_stump: 黑斧木妖
-  brown_windup_bear: 褐色發條熊
-  cold_eye: 冰獨眼獸
-  evolved_ghost: 進化妖魔
+  brown_windup_bear: 褐色发条熊
+  cold_eye: 冰独眼兽
+  evolved_ghost: 进化妖魔
   fire_boar: 火肥肥
-  green_mushroom: 綠菇菇
-  mushroom: 菇菇寶貝
+  green_mushroom: 绿菇菇
+  mushroom: 菇菇宝贝
   pig: 肥肥
-  pink_windup_bear: 粉色發條熊
-  ribbon_pig: 緞帶肥肥
-  skeleton_officer: 骷髏隊長
-  skeleton_soldier: 骷髏士兵
+  pink_windup_bear: 粉色发条熊
+  ribbon_pig: 缎带肥肥
+  skeleton_officer: 骷髅队长
+  skeleton_soldier: 骷髅士兵
   spike_mushroom: 刺菇菇
   wild_boar: 黑肥肥
-  wild_kargo: 魔龍
-  wind_single_eye_beast: 風獨眼獸
-  zombie_mushroom: 殭屍菇菇
-  grupin: 藍獨角獅
-  red_cellion: 紅獨角獅
-  the_book_ghost: 書靈
-  blue_perfume: 冷豔香水
+  wild_kargo: 魔龙
+  wind_single_eye_beast: 风独眼兽
+  zombie_mushroom: 僵尸菇菇
+  grupin: 蓝独角狮
+  red_cellion: 红独角狮
+  the_book_ghost: 书灵
+  blue_perfume: 冷艳香水
   grizzly: 功夫熊
-  panda: 柔道貓熊
+  panda: 柔道熊猫
   hodori: 小虎
   moon_bunny: 月妙
   nependeath: 食人花
   dark_nependeath: 黑食人花
+  skelosaurus: 老骷髅龙
+  nest_golem: 泥人妖
 
 # Register mobs in each maps
+# NOTE: monster name MUST match the directory name under monster/ (e.g. monster/skelosaurus/)
 map_mobs_mapping:
   ant_cave_2: [spike_mushroom, zombie_mushroom]
   cloud_balcony: [pink_windup_bear, brown_windup_bear]
