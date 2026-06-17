@@ -7,11 +7,14 @@ system:
   server: "Talery"         # 服务器标识
 
 game_window:
-  title: "TO_BE_DETERMINED"   # ⚠️ 待确认 Talery 窗口标题 (阶段一)
-  size: [693, 1282]           # ⚠️ 待确认分辨率 [高, 宽] (阶段一)
+  title: "TaleryMS"           # Talery窗口标题token (含动态后缀如 TaleryMS-30ms-100)
+  size: [720, 1282]           # 内容区尺寸 [高, 宽] (裁剪27px标题栏后 = 747-27)
+  title_bar_height: 27        # 标题栏高度 (实测: 747-720=27, 含边框阴影)
+  window_width: 0             # 0=不强制resize (Talery不支持手动调窗口)
+  window_height: 0            # 0=不强制resize
 
 ui_coords:
-  ui_y_start: 610             # ⚠️ 待测量 (阶段一)
+  ui_y_start: 724             # 游戏画面区高度 (debug窗口显示此值之上; 可自行调节: 看到HP/MP栏出现即止)
 
 rune:
   enable: false               # 🚫 Talery 无符文系统，完全关闭

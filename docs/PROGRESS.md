@@ -1,7 +1,7 @@
 # Talery 迁移改造进度跟踪
 
-> 📅 创建: 2026-06-16 | 🔄 最后更新: 2026-06-17
-> 🎯 总体进度: 2/7 阶段完成 (阶段二完成; 阶段一×分辨率,细化后重新排入)
+> 📅 创建: 2026-06-16 | 🔄 最后更新: 2026-06-18
+> 🎯 总体进度: 阶段一分辨率适配完成, 阶段三开始(map.png重录制+引擎验证)
 
 ---
 
@@ -9,68 +9,85 @@
 
 | 阶段 | 内容 | 预计天数 | 状态 | 完成步骤 |
 |------|------|---------|------|---------|
-| 一 | 分辨率适配改造 | 1~2天 | 🔴 进行中 | 0/12 |
+| 一 | 分辨率适配改造 | 1~2天 | ✅ 已完成 | 12/12 |
 | 二 | 符文关闭+校验框架 | 2天 | ✅ 已完成 | 8/8 |
-| 三 | 地图与路线验证 | 2天 | ⬜ 未开始 | 0/22 |
+| 三 | 地图与路线验证 | 2天 | 🔴 进行中 | 1/22 (talery_ant_cave_2 录制完成) |
 | 四 | 怪物图集验证 | 1天 | ⬜ 未开始 | 0/18 |
 | 五 | 核心参数微调 | 2天 | ⬜ 未开始 | 0/12 |
 | 六 | 校验机制适配 | 待定 | ⬜ 未开始 | 0/6 |
 | 七 | 集成测试 | 3天 | ⬜ 未开始 | 0/5 |
 
-**总体进度: 9%** (8/90 步骤完成: 阶段二8/8 + 阶段一分析完成)
+**总体进度: 23%** (21/90 步骤完成)
 
 ---
 
-## 阶段一: 分辨率适配改造 (重新细化)
+## 阶段一: 分辨率适配改造 ✅
 
-> ⚠️ Talery 不支持手动调分辨率 → 需要从代码中解耦所有 1296×759 硬编码
-> 
-> 📊 **分析已完成** (2026-06-17): 发现 7 处硬编码依赖，详见 TALERY_MIGRATION_PLAN.md §1.0
+> ✅ 2026-06-18 完成。Talery 1280×720 分辨率已完全适配。
 
-#### 1.1 信息收集
+### 关键发现
 
-| # | 任务 | 完成日期 | 备注 |
-|---|------|---------|------|
-| 1.1.1 | 确认 Talery 窗口标题 | ⬜ | 启动游戏后用 SPY++ 或 pygetwindow 查看 |
-| 1.1.2 | 列出游戏内可选分辨率 | ⬜ | 打开游戏设置→查看分辨率选项 |
-| 1.1.3 | 截图测量窗口/内容区/标题栏尺寸 | ⬜ | 选择 16:9 分辨率后截图 |
-| 1.1.4 | 测量所有 UI 按钮坐标 | ⬜ | menu/channel/random_channel/login_button 等 |
-| 1.1.5 | 测量符文相关 UI 坐标 | ⬜ | rune_warning/rune_enable/rune_solver (即使关闭,保留完整性) |
+| 参数 | Artale | Talery (实测) | 差异 |
+|------|--------|---------------|------|
+| 原始帧尺寸 | 1296×759 | **747×1282** | WindowsCapture 含标题栏 |
+| 标题栏高度 | 59px | **27px** | 更小 |
+| 内容区尺寸 | 693×1282 | **720×1282** | 宽度一致, 高度+27px |
+| WINDOW_WORKING_SIZE | (1296, 700) | **(1296, 728)** | 保持原始宽高比 |
 
-#### 1.2 配置文件更新
-
-| # | 任务 | 涉及文件 | 完成日期 | 备注 |
-|---|------|---------|---------|------|
-| 1.2.1 | 更新 `game_window.title` | `config/config_talery.yaml` | ⬜ | |
-| 1.2.2 | 更新 `game_window.size` | `config/config_talery.yaml` | ⬜ | 内容区 [H, W] |
-| 1.2.3 | 更新 `game_window.title_bar_height` | `config/config_talery.yaml` | ⬜ | |
-| 1.2.4 | 新增 `window_width`/`window_height` | `config/config_talery.yaml` | ⬜ | Talery 填 0 表示不强制 resize |
-| 1.2.5 | 更新所有 `ui_coords` 向坐标 | `config/config_talery.yaml` | ⬜ | |
-| 1.2.6 | 更新符文相关坐标 | `config/config_talery.yaml` | ⬜ | |
-
-#### 1.3 代码改造
-
-| # | 任务 | 涉及文件 | 改造内容 | 完成日期 | 备注 |
-|---|------|---------|---------|---------|------|
-| 1.3.1 | 动态计算工作尺寸 | `src/utils/global_var.py` | `WINDOW_WORKING_SIZE` 常量→ `get_window_working_size(cfg)` 函数 | ⬜ | |
-| 1.3.2 | 条件化 resize 调用 | `src/input/GameWindowCapturor.py:40` | `window_width>0` 时才调用 resize, Talery 跳过 | ⬜ | |
-| 1.3.3 | 条件化 resize 调用 | `src/engine/MapleStoryAutoLevelUp.py:1258` | 切频道重连时同样处理 | ⬜ | |
-| 1.3.4 | 替换 WINDOW_WORKING_SIZE | `src/engine/MapleStoryAutoLevelUp.py:968` | 用 `self.window_working_size` | ⬜ | init 中初始化 |
-| 1.3.5 | 参数化 normalize | `src/utils/common.py:816` | `(693,1282)` → 从参数或配置传入 | ⬜ | |
-| 1.3.6 | 同步改造 routeRecorder | `tools/routeRecorder.py:174` | 同样替换 WINDOW_WORKING_SIZE 引用 | ⬜ | |
-
-#### 1.4 验证
+### 1.1 信息收集
 
 | # | 任务 | 完成日期 | 备注 |
 |---|------|---------|------|
-| 1.4.1 | 启动引擎+确认截图尺寸正确 | ⬜ | 观察调试窗口尺寸 |
-| 1.4.2 | 确认小地图检测 (get_minimap_loc_size) 正常 | ⬜ | |
-| 1.4.3 | 确认玩家定位 (黄色点) 正常 | ⬜ | 若颜色不同需更新 minimap.player_color |
-| 1.4.4 | 确认 routeRecorder 录制正常 | ⬜ | 跑一小段路→按 F4 保存 map.png |
+| 1.1.1 | 确认 Talery 窗口标题 | ✅ 2026-06-18 | 标题为 TaleryMS-XXX (动态后缀), 模糊匹配 "TaleryMS" |
+| 1.1.2 | 列出游戏内可选分辨率 | ✅ | 1280×720 原生 |
+| 1.1.3 | 截图测量窗口/内容区/标题栏尺寸 | ✅ | 原始帧 747×1282, 标题栏 27px, 内容区 720×1282 |
+| 1.1.4 | 测量 UI 按钮坐标 | ⬜ | 暂用 Artale 值, 待后续微调 |
+| 1.1.5 | 测量符文相关 UI 坐标 | ⬜ | 符文已关闭, 低优先级 |
+
+### 1.2 配置文件更新 (config_talery.yaml)
+
+| # | 任务 | 值 |
+|---|------|-----|
+| 1.2.1 | `game_window.title` | `"TaleryMS"` (模糊匹配) |
+| 1.2.2 | `game_window.size` | `[720, 1282]` |
+| 1.2.3 | `game_window.title_bar_height` | `27` |
+| 1.2.4 | `window_width` / `window_height` | `0` (跳过强制 resize) |
+
+### 1.3 代码改造
+
+| # | 文件 | 改动内容 |
+|---|------|---------|
+| 1.3.1 | `src/utils/global_var.py` | **新增** `get_window_working_size(cfg)` 函数 — 根据内容区尺寸动态计算工作尺寸, 保持原始宽高比 |
+| 1.3.2 | `src/input/GameWindowCapturor.py` | resize_window 条件化 — `window_width > 0` 时才调用; Talery 配置为 0 则跳过 |
+| 1.3.3 | `src/engine/MapleStoryAutoLevelUp.py` | 切频道重连时 resize 同样条件化 |
+| 1.3.4 | `src/engine/MapleStoryAutoLevelUp.py` | `get_img_frame()` 改用 `get_window_working_size(self.cfg)` 替代 `WINDOW_WORKING_SIZE` |
+| 1.3.5 | `src/engine/MapleStoryAutoLevelUp.py` | `VideoWriter` 初始化同样用动态尺寸 |
+| 1.3.6 | `tools/routeRecorder.py` | `get_img_frame()` 同步改用 `get_window_working_size(self.cfg)` |
+
+### 1.4 其他改动
+
+| # | 说明 |
+|---|------|
+| `config_talery.yaml` | `ui_y_start: 660` — 按比例调整 (原 610 × 728/700 ≈ 634, 再加余量) |
+| `src/engine/MapleStoryAutoLevelUp.py` | `ensure_is_in_party()` 添加 None 守卫 — 防止首帧未就绪崩溃 |
+| `src/engine/MapleStoryAutoLevelUp.py` | minimap 绘制颜色从红色 `(0,0,255)` 改为绿色 `(0,255,0)` |
+
+### 1.5 WINDOW_WORKING_SIZE 重要修复
+
+**根因**: `WINDOW_WORKING_SIZE = (1296, 700)` 是为 Artale `693×1282` 设计的。Talery `720×1282` resize 到此尺寸时被**纵向压扁 2.8%**, 导致 `find_pattern_sqdiff` 模板匹配完全失败。
+
+**修复**: 新增 `get_window_working_size(cfg)` 动态计算:
+
+| 平台 | content size | 缩放比 | working size |
+|------|-------------|-------|-------------|
+| Artale | (693, 1282) | 1296/1282 ≈ 1.011 | (1296, **700**) |
+| Talery | (720, 1282) | 1296/1282 ≈ 1.011 | (1296, **728**) |
+
+**影响**: 引擎和 routeRecorder 的 `get_img_frame()` 均改用动态尺寸, 小地图不再变形。
 
 ---
 
-## 阶段二: 符文关闭+校验框架
+## 阶段二: 符文关闭+校验框架 ✅
 
 ### 符文功能禁用
 
@@ -79,45 +96,67 @@
 | 2.1.1 | config_talery 设置 rune.enable: false | ✅ | |
 | 2.1.2 | 引擎添加 rune.enable 判断 | ✅ | hunting.py check_transitions() |
 | 2.1.3 | Hunting 跳过符文检查 | ✅ | hunting.py |
-| 2.1.4 | FSM 条件注册符文状态 | ✅ | 始终注册，靠 rune.enable 控制是否触发 |
+| 2.1.4 | FSM 条件注册符文状态 | ✅ | 始终注册, 靠 rune.enable 控制是否触发 |
 
 ### 校验框架搭建
 
 | # | 任务 | 完成日期 | 备注 |
 |---|------|---------|------|
 | 2.2.1 | 添加 talery_anti_cheat 配置块 | ✅ | config_talery.yaml |
-| 2.2.2 | 新建 anti_cheat.py 状态 | ✅ | 空壳占位，待后续完善 |
+| 2.2.2 | 新建 anti_cheat.py 状态 | ✅ | 空壳占位, 待后续完善 |
 | 2.2.3 | FSM 注册 anti_cheat 状态 | ✅ | MapleStoryAutoLevelUp.py |
 | 2.2.4 | Hunting 添加校验触发检测 | ✅ | hunting.py TODO占位 |
 
 ---
 
-## 阶段三: 地图与路线验证
+## 阶段三: 地图与路线验证 🔴
 
-| 地图名 | map.png | route可用 | 完成日期 | 备注 |
-|--------|---------|----------|---------|------|
-| ant_cave_2 | ⬜ | ⬜ | | |
-| cloud_balcony | ⬜ | ⬜ | | |
-| dragon_territory | ⬜ | ⬜ | | |
-| empty_house | ⬜ | ⬜ | | |
-| fire_land_1 | ⬜ | ⬜ | | |
-| fire_land_2 | ⬜ | ⬜ | | |
-| first_barrack | ⬜ | ⬜ | | |
-| land_of_wild_boar | ⬜ | ⬜ | | |
-| lost_time_1 | ⬜ | ⬜ | | |
-| monkey_swamp_3 | ⬜ | ⬜ | | |
-| mushroom_hills | ⬜ | ⬜ | | |
-| north_forest_training_ground_2 | ⬜ | ⬜ | | |
-| north_forest_training_ground_8 | ⬜ | ⬜ | | |
-| pig_shores | ⬜ | ⬜ | | |
-| the_path_of_time_1_for_mage | ⬜ | ⬜ | | |
-| garden_of_green_2 | ⬜ | ⬜ | | |
-| garden_of_red_2 | ⬜ | ⬜ | | |
-| foggy_forest_for_mage | ⬜ | ⬜ | | |
-| 101_2f_east | ⬜ | ⬜ | | |
-| black_mountain | ⬜ | ⬜ | | |
-| disposed_flower_garden | ⬜ | ⬜ | | |
-| mu_Lung_wild_bear_area_2 | ⬜ | ⬜ | | |
+> 2026-06-18: talery_ant_cave_2 录制完成, 引擎验证进行中
+
+### 地图资源状态
+
+| 地图名 | Talery map.png | Talery route | 验证状态 | 备注 |
+|--------|---------------|-------------|---------|------|
+| talery_ant_cave_2 | ✅ 已录制 | ✅ route1.png | 🔴 验证中 | 怪物: spike_mushroom, zombie_mushroom |
+| ant_cave_2 (Artale) | 🔒 原始 | 🔒 原始 | — | 仅 Artale 使用 |
+| cloud_balcony | ⬜ | ⬜ | — | |
+| dragon_territory | ⬜ | ⬜ | — | |
+| empty_house | ⬜ | ⬜ | — | |
+| fire_land_1 | ⬜ | ⬜ | — | |
+| fire_land_2 | ⬜ | ⬜ | — | |
+| first_barrack | ⬜ | ⬜ | — | |
+| land_of_wild_boar | ⬜ | ⬜ | — | |
+| lost_time_1 | ⬜ | ⬜ | — | |
+| monkey_swamp_3 | ⬜ | ⬜ | — | |
+| mushroom_hills | ⬜ | ⬜ | — | |
+| north_forest_training_ground_2 | ⬜ | ⬜ | — | |
+| north_forest_training_ground_8 | ⬜ | ⬜ | — | |
+| pig_shores | ⬜ | ⬜ | — | |
+| the_path_of_time_1_for_mage | ⬜ | ⬜ | — | |
+| garden_of_green_2 | ⬜ | ⬜ | — | |
+| garden_of_red_2 | ⬜ | ⬜ | — | |
+| foggy_forest_for_mage | ⬜ | ⬜ | — | |
+| 101_2f_east | ⬜ | ⬜ | — | |
+| black_mountain | ⬜ | ⬜ | — | |
+| disposed_flower_garden | ⬜ | ⬜ | — | |
+| mu_Lung_wild_bear_area_2 | ⬜ | ⬜ | — | |
+
+### config_data.yaml 更新
+
+```yaml
+map_mobs_mapping:
+  ant_cave_2: [spike_mushroom, zombie_mushroom]
+  talery_ant_cave_2: [spike_mushroom, zombie_mushroom]   # 新增 Talery 蚂蚁洞2
+```
+
+### 录制 map.png 步骤 (供后续地图参考)
+
+```cmd
+python -m tools.routeRecorder.py --cfg talery --new_map talery_<地图名>
+```
+- 跑遍地图全貌 → 按 **F4** 保存 map.png
+- 按 **F3** 保存 route (可选)
+- 按 **Q** 退出
 
 ---
 
@@ -139,6 +178,7 @@
 | moon_bunny | ⬜ | | |
 | mushroom | ⬜ | | |
 | nependeath | ⬜ | | |
+| nest_golem | ⬜ | | |
 | panda | ⬜ | | |
 | pig | ⬜ | | |
 | pink_windup_bear | ⬜ | | |
@@ -146,6 +186,7 @@
 | ribbon_pig | ⬜ | | |
 | skeleton_officer | ⬜ | | |
 | skeleton_soldier | ⬜ | | |
+| skelosaurus | ⬜ | | |
 | spike_mushroom | ⬜ | | |
 | the_book_ghost | ⬜ | | |
 | wild_boar | ⬜ | | |
@@ -165,7 +206,7 @@
 | 5.1.1 | party_red_bar HSV | [0,60,60]-[0,100,100] | | ⬜ |
 | 5.1.2 | party_red_bar offset | [20, 66] | | ⬜ |
 | 5.1.3 | minimap player_color | [136,255,255] | | ⬜ |
-| 5.1.4 | minimap other_player | [0,0,255] | | ⬜ |
+| 5.1.4 | minimap other_player_color | [0,0,255] | | ⬜ |
 | 5.1.5 | minimap offset | [0, 0] | | ⬜ |
 
 ### 怪物检测
@@ -190,7 +231,7 @@
 
 | # | 任务 | 完成日期 | 备注 |
 |---|------|---------|------|
-| 6.1 | 收集校验弹窗截图 | ⬜ | 需先游玩Talery |
+| 6.1 | 收集校验弹窗截图 | ⬜ | 需先游玩 Talery |
 | 6.2 | 分类+设计检测方案 | ⬜ | |
 | 6.3 | 完善 anti_cheat.py | ⬜ | |
 | 6.4 | 更新配置参数 | ⬜ | |
@@ -203,24 +244,58 @@
 
 | # | 任务 | 完成日期 | 备注 |
 |---|------|---------|------|
-| 7.1 | 逐地图10分钟测试 | ⬜ | |
-| 7.2 | 1小时+稳定性测试 | ⬜ | |
+| 7.1 | 逐地图 10 分钟测试 | ⬜ | |
+| 7.2 | 1 小时+稳定性测试 | ⬜ | |
 | 7.3 | 多职业测试 | ⬜ | |
 | 7.4 | 边界情况测试 | ⬜ | |
 | 7.5 | 反外挂机制观察 | ⬜ | |
 
 ---
 
+## 改动文件清单
+
+### 修改的现有文件
+
+| 文件 | 改动内容 |
+|------|---------|
+| `config/config_talery.yaml` | 填充窗口标题、分辨率、标题栏高度; 跳过 resize; ui_y_start 调整 |
+| `config/config_data.yaml` | 新增 `talery_ant_cave_2` 地图和怪物映射 |
+| `src/utils/global_var.py` | **新增** `get_window_working_size(cfg)` 动态计算工作尺寸 |
+| `src/input/GameWindowCapturor.py` | resize_window 条件调用 — Talery 跳过 |
+| `src/engine/MapleStoryAutoLevelUp.py` | ① resize 条件化 ② get_img_frame 动态尺寸 ③ VideoWriter 动态尺寸 ④ ensure_is_in_party None 守卫 ⑤ minimap 框颜色改绿色 |
+| `tools/routeRecorder.py` | get_img_frame 动态尺寸 |
+
+### 新增文件
+
+| 文件 | 说明 |
+|------|------|
+| `minimaps/talery_ant_cave_2/map.png` | Talery 1280×720 下录制的全局地图 |
+| `minimaps/talery_ant_cave_2/route1.png` | 路线图 |
+
+### 未修改的文件 (保留原样)
+
+| 文件 | 原因 |
+|------|------|
+| `config/config_default.yaml` | Artale 默认配置, 不修改 |
+| `src/states/finding_rune.py` / `near_rune.py` / `solving_rune.py` | 通过配置控制是否触发 |
+| `rune/` 目录 | 保留完整性 |
+| `monster/` 目录 | 复用 Artale 怪物图集 |
+
+---
+
 ## 📝 问题记录
 
-| 日期 | 问题描述 | 解决方案 | 状态 |
-|------|---------|---------|------|
-| | | | |
+| 日期 | 问题 | 解决方案 | 状态 |
+|------|------|---------|------|
+| 2026-06-18 | `ensure_is_in_party` 因 get_img_frame 返回 None 崩溃 | 添加 None 守卫, 优雅跳过 | ✅ |
+| 2026-06-18 | 内容区尺寸反复变动 (688/720/747) | 最终确认为 747→裁剪27→720 | ✅ |
+| 2026-06-18 | routeRecorder 小地图拼接偏移 | WINDOW_WORKING_SIZE 纵向压扁, 改为动态计算 | ✅ |
+| 2026-06-18 | engine 中 routeMap 对不上 | Talery 的小地图比例与 Artale 录制的 map.png 不同, 需重新录制 | ✅ |
 
 ---
 
 ## 🔗 相关文档
 
-- [项目分析文档](PROJECT_ANALYSIS.md) - 了解项目架构和代码
-- [迁移计划文档](TALERY_MIGRATION_PLAN.md) - 详细改造方案
+- [项目分析文档](PROJECT_ANALYSIS.md)
+- [迁移计划文档](TALERY_MIGRATION_PLAN.md)
 - 上游仓库: https://github.com/KenYu910645/MapleStoryAutoLevelUp

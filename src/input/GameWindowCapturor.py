@@ -37,7 +37,12 @@ class GameWindowCapturor:
         # Get game window title
         self.window_title = get_game_window_title_by_token(cfg["game_window"]["title"])
 
-        resize_window(self.window_title, width=1296, height=759)
+        win_w = cfg.get("game_window", {}).get("window_width", 1296)
+        win_h = cfg.get("game_window", {}).get("window_height", 759)
+        if win_w > 0 and win_h > 0:
+            resize_window(self.window_title, width=win_w, height=win_h)
+        else:
+            logger.info("[Talery] Using native resolution — resize_window skipped")
         
         if self.window_title is None:
             raise RuntimeError(

@@ -13,7 +13,7 @@ import numpy as np
 import cv2
 
 # local import
-from src.utils.global_var import WINDOW_WORKING_SIZE
+from src.utils.global_var import WINDOW_WORKING_SIZE, get_window_working_size
 from src.utils.logger import logger
 from src.utils.common import (
     find_pattern_sqdiff, draw_rectangle, screenshot,
@@ -171,7 +171,8 @@ class RouteRecorder():
             logger.error(text)
             return
 
-        return cv2.resize(frame_no_title, WINDOW_WORKING_SIZE,
+        win_size = get_window_working_size(self.cfg)
+        return cv2.resize(frame_no_title, win_size,
                    interpolation=cv2.INTER_NEAREST)
 
     def __init__(self, args):

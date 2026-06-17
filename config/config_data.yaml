@@ -2,6 +2,7 @@
 eng_to_cn:
   # map
   ant_cave_2: 蚂蚁洞2
+  talery_ant_cave_2: Talery蚂蚁洞2
   cloud_balcony: 云彩露台
   dragon_territory: 魔龙领地
   empty_house: 空屋
@@ -59,6 +60,7 @@ eng_to_cn:
 # NOTE: monster name MUST match the directory name under monster/ (e.g. monster/skelosaurus/)
 map_mobs_mapping:
   ant_cave_2: [spike_mushroom, zombie_mushroom]
+  talery_ant_cave_2: [spike_mushroom, zombie_mushroom]   # Talery蚂蚁洞2
   cloud_balcony: [pink_windup_bear, brown_windup_bear]
   dragon_territory: [wild_kargo]
   empty_house: [mushroom]

@@ -19,7 +19,7 @@ import cv2
 import yaml
 
 # Local import
-from src.utils.global_var import WINDOW_WORKING_SIZE
+from src.utils.global_var import WINDOW_WORKING_SIZE, get_window_working_size
 from src.utils.logger import logger
 from src.utils.common import (find_pattern_sqdiff, draw_rectangle, screenshot, nms,
     load_image, get_mask, get_minimap_loc_size, get_player_location_on_minimap,
@@ -339,7 +339,8 @@ class MapleStoryAutoBot:
 
         # Get video writer
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # mp4 codec
-        self.video_writer = cv2.VideoWriter(path, fourcc, 10, WINDOW_WORKING_SIZE)
+        win_size = get_window_working_size(self.cfg) if hasattr(self, 'cfg') and self.cfg else WINDOW_WORKING_SIZE
+        self.video_writer = cv2.VideoWriter(path, fourcc, 10, win_size)
 
         logger.info(f"[start_record] Record video to {path}")
 
@@ -965,7 +966,8 @@ class MapleStoryAutoBot:
                 logger.error(text)
                 return
 
-        return cv2.resize(frame_no_title, WINDOW_WORKING_SIZE,
+        win_size = get_window_working_size(self.cfg)
+        return cv2.resize(frame_no_title, win_size,
                    interpolation=cv2.INTER_NEAREST)
 
     def is_player_stuck(self):
@@ -1125,7 +1127,7 @@ class MapleStoryAutoBot:
             self.img_frame_debug,
             self.loc_minimap,
             self.img_minimap.shape[:2],
-            (0, 0, 255), "minimap",thickness=2
+        (0, 255, 0), "minimap",thickness=2
         )
 
         # Don't draw minimap in patrol mode
@@ -1207,6 +1209,10 @@ class MapleStoryAutoBot:
 
         # Update image frame
         self.img_frame = self.get_img_frame()
+        if self.img_frame is None:
+            logger.warning("[ensure_is_in_party] get_img_frame returned None, skipping")
+            press_key(self.cfg["key"]["party"])
+            return
 
         # Find the 'create party' button
         loc_enable, score_enable, _ = find_pattern_sqdiff(
@@ -1255,7 +1261,10 @@ class MapleStoryAutoBot:
             except Exception as e:
                 logger.warning(f"Exception occurred while waiting for login button: {e}")
                 if not is_mac():
-                    resize_window(window_title, width=1296, height=759)
+                    win_w = self.cfg.get("game_window", {}).get("window_width", 1296)
+                    win_h = self.cfg.get("game_window", {}).get("window_height", 759)
+                    if win_w > 0 and win_h > 0:
+                        resize_window(window_title, width=win_w, height=win_h)
                 logger.info("Retrying login button detection...")
 
             time.sleep(3)
