@@ -979,6 +979,8 @@ class MainWindow(QMainWindow):
         for title in self.cfg:
             if title in ADV_SETTINGS_HIDE: # skip hide settings
                 continue
+            if title not in self.advance_settings_gboxes:
+                continue  # skip keys added by override config (e.g., rune, player_arrow)
             refs = getattr(self.advance_settings_gboxes[title], "_field_refs", {})
             for key, value in self.cfg[title].items():
                 widget = refs.get(key)

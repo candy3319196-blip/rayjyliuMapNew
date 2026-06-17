@@ -1,5 +1,4 @@
 bot:
-  attack: aoe_skill
   map: talery_ant_cave_2
 game_window:
   size:
@@ -12,14 +11,20 @@ game_window:
 health_monitor:
   add_hp_percent: 0
   add_mp_percent: 0
+  enable: false
 key:
-  aoe_skill: a
-  directional_attack: ''
+  aoe_skill: x
+  directional_attack: a
   jump: alt
+  return_home: ''
+  teleport: ''
+player_arrow:
+  enable: true
 rune:
   enable: false
 system:
   server: Talery
+  skip_party_check: true
 talery_anti_cheat:
   enable: false
 ui_coords:

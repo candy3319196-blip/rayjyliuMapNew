@@ -82,6 +82,7 @@ class MapleStoryAutoBot:
         # Coordinate (top-left coordinate)
         self.loc_nametag = (0, 0) # nametag location on game screen
         self.loc_party_red_bar = (0, 0) # party red bar location on game screen
+        self.loc_player_arrow = (0, 0) # player arrow location on game screen
         self.loc_minimap = (0, 0) # minimap location on game screen
         self.loc_player = (0, 0) # player location on game screen
         self.loc_player_minimap = (0, 0) # player location on minimap
@@ -536,6 +537,65 @@ class MapleStoryAutoBot:
                     (h, w), (0, 255, 0), "party red bar", thickness=1, text_height=0.4)
 
         return loc_player, loc_party_red_bar
+
+    def get_player_location_by_arrow(self):
+        '''
+        get_player_location_by_arrow
+        
+        Detects the downward arrow above the player character to estimate
+        player location. Used on servers without party red bar (e.g., Talery).
+        The arrow is an irregular dark-red downward arrow.
+        '''
+        # Zero out minimap area in the img_frame
+        img_frame = self.img_frame.copy()
+        x, y = self.loc_minimap
+        h, w = self.img_minimap.shape[:2]
+        img_frame[y:y+h, x:x+w] = 0
+
+        # Get camera area
+        img_camera = img_frame[:self.cfg["ui_coords"]["ui_y_start"], :]
+
+        # Convert to HSV
+        img_hsv = cv2.cvtColor(img_camera, cv2.COLOR_BGR2HSV)
+        lower_arrow = to_opencv_hsv(self.cfg["player_arrow"]["lower_arrow"])
+        upper_arrow = to_opencv_hsv(self.cfg["player_arrow"]["upper_arrow"])
+        mask_arrow = cv2.inRange(img_hsv, lower_arrow, upper_arrow)
+        # cv2.imshow("mask_arrow", mask_arrow)
+
+        # Find contours on mask_arrow
+        contours, _ = cv2.findContours(mask_arrow, cv2.RETR_EXTERNAL,
+                                       cv2.CHAIN_APPROX_SIMPLE)
+
+        # Filter contour by area (arrow is ~2000-3000 pixels)
+        min_area = self.cfg["player_arrow"]["min_area"]
+        max_area = self.cfg["player_arrow"]["max_area"]
+        boxs = []
+        for c in contours:
+            area = cv2.contourArea(c)
+            if min_area <= area <= max_area:
+                x, y, w, h = cv2.boundingRect(c)
+                boxs.append((x, y, w, h, area))
+                # cv2.drawContours(self.img_frame_debug, [c], -1, (0, 255, 0), 1)
+
+        if not boxs:
+            return None, None  # arrow not found
+
+        # Sort box by area (largest first)
+        boxs.sort(key=lambda box: box[4], reverse=True)
+
+        # Consider the biggest area as the player arrow
+        x, y, w, h, _ = boxs[0]
+
+        # Offset coordinate from arrow bounding box top-left to character center
+        loc_player_arrow = (x, y)
+        loc_player = (x + self.cfg["player_arrow"]["offset"][0],
+                      y + self.cfg["player_arrow"]["offset"][1])
+
+        # visualize for debug
+        draw_rectangle(self.img_frame_debug, loc_player_arrow,
+                    (h, w), (0, 255, 255), "player arrow", thickness=1, text_height=0.4)
+
+        return loc_player, loc_player_arrow
 
     def get_player_location_on_global_map(self):
         '''
@@ -1632,6 +1692,10 @@ class MapleStoryAutoBot:
         # Get player location in game window
         if self.cfg["nametag"]["enable"]:
             loc_player = self.get_player_location_by_nametag()
+        elif self.cfg.get("player_arrow", {}).get("enable", False):
+            loc_player, loc_player_arrow = self.get_player_location_by_arrow()
+            if loc_player_arrow is not None:
+                self.loc_player_arrow = loc_player_arrow
         else:
             loc_player, loc_party_red_bar = self.get_player_location_by_party_red_bar()
             if loc_party_red_bar is not None:
@@ -1774,11 +1838,12 @@ class MapleStoryAutoBot:
         Auto Bot main loop
         Only run when call autobot from UI framework and AutoBotController
         '''
-        # Make sure player is in party
+        # Make sure player is in party (skip if Talery)
         if not is_mac():
             activate_game_window(self.capture.window_title)
             time.sleep(0.3)
-            self.ensure_is_in_party()
+            if not self.cfg.get("system", {}).get("skip_party_check", False):
+                self.ensure_is_in_party()
 
         while not self.kb.is_terminated:
 
@@ -1794,7 +1859,10 @@ class MapleStoryAutoBot:
                 if self.is_show_debug_window and self.is_ui:
                     img_frame_debug_emit = self.img_frame_debug[:
                         self.cfg["ui_coords"]["ui_y_start"], :].copy()
-                    img_route_debug_emit = self.img_route_debug.copy()
+                    if self.img_route_debug is not None:
+                        img_route_debug_emit = self.img_route_debug.copy()
+                    else:
+                        img_route_debug_emit = self.img_frame_debug.copy()
                     self.image_debug_signal.emit(img_frame_debug_emit)
                     self.route_map_viz_signal.emit(img_route_debug_emit)
             else:

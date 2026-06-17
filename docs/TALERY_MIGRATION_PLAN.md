@@ -351,8 +351,13 @@ class AntiCheatState(State):
 
 | 步骤 | 任务 | 配置项 | 状态 |
 |------|------|--------|------|
-| 5.1.1 | 验证组队红条 HSV 颜色范围 | `party_red_bar.lower_red/upper_red` | ⬜ 待做 |
-| 5.1.2 | 验证红条偏移量 (offset) | `party_red_bar.offset` | ⬜ 待做 |
+| 5.1.0a | ⬇️ 箭头定位: 启用 player_arrow | `player_arrow.enable` = true | ✅ 已完成 (2026-06-18) |
+| 5.1.0b | 箭头 HSV 下限 (暗红色) | `player_arrow.lower_arrow` = [0, 30, 10] | ✅ 已完成 |
+| 5.1.0c | 箭头 HSV 上限 | `player_arrow.upper_arrow` = [15, 100, 80] | ✅ 已完成 |
+| 5.1.0d | 箭头→角色中心偏移 | `player_arrow.offset` = [22, 120] | ✅ 已完成 |
+| 5.1.0e | 最小/最大轮廓面积 | `player_arrow.min/max_area` = 100/3000 | ✅ 已完成 |
+| 5.1.1 | ~~验证组队红条 HSV~~ | 替换为箭头定位, 不再使用 party_red_bar | ~~取消~~ |
+| 5.1.2 | ~~验证红条偏移量~~ | 替换为箭头定位 | ~~取消~~ |
 | 5.1.3 | 验证小地图玩家点颜色 | `minimap.player_color` | ⬜ 待做 |
 | 5.1.4 | 验证其他玩家点颜色 | `minimap.other_player_color` | ⬜ 待做 |
 | 5.1.5 | 验证小地图全局偏移 | `minimap.offset` | ⬜ 待做 |

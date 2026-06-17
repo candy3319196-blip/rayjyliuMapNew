@@ -95,6 +95,17 @@ party_red_bar:
   create_party_button_cn_thres: 0.04   # 📏 threshold for create party button matching
   create_party_button_eng_thres: 0.04 # 📏 threshold for create party button matching
 
+player_arrow:
+  # ⬇️ Player Arrow Detection
+  # Detects the downward arrow above the character to estimate player location.
+  # Used on servers without party red bar (e.g., Talery).
+  enable: false              # ✅ Enable arrow-based player detection (default: false)
+  lower_arrow: [0, 30, 10]   # 🎯 HSV, darker red of the arrow
+  upper_arrow: [15, 100, 80] # 🎯 HSV, brighter red of the arrow
+  offset: [22, 120]          # 🎯 Offset from arrow bounding box top-left to character center
+  min_area: 100              # 📏 Minimum contour area for arrow
+  max_area: 3000             # 📏 Maximum contour area for arrow
+
 nametag:
   # 🏷️ NameTag Recognition
   # ⚠️ This feature is deprecated, using party red bar is way better than detecting nametag.

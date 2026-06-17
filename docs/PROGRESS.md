@@ -201,10 +201,46 @@ python -m tools.routeRecorder.py --cfg talery --new_map talery_<地图名>
 
 ### 玩家定位
 
+#### 5.1 箭头定位 (新增, 替代 party_red_bar)
+
+> ✅ 2026-06-18 完成。Talery 无组队红条，改为识别角色头顶的暗红色向下箭头。
+
+| # | 参数 | 值 | 说明 | 完成 |
+|---|------|-----|------|------|
+| 5.1.0a | player_arrow.enable | true (Talery) | 启用箭头定位, 默认关闭 | ✅ |
+| 5.1.0b | player_arrow.lower_arrow | [0, 30, 10] | HSV 下限 (暗红色箭头) | ✅ |
+| 5.1.0c | player_arrow.upper_arrow | [15, 100, 80] | HSV 上限 | ✅ |
+| 5.1.0d | player_arrow.offset | [22, 120] | 箭头左上→角色中心偏移 | ✅ |
+| 5.1.0e | player_arrow.min_area | 100 | 最小轮廓面积 | ✅ |
+| 5.1.0f | player_arrow.max_area | 3000 | 最大轮廓面积 | ✅ |
+
+**箭头 BGR 分析结果 (基于 tools/2.png):**
+- 尺寸: 45×102 (宽×高)
+- BGR 均值: B≈28, G≈29, R≈111 (暗红色)
+- HSV 均值: H≈62°, S≈72%, V≈43%
+- Top 颜色: BGR(0,0,133) RGB(133,0,0) 出现 54 次
+- BGR(0,0,112), BGR(0,0,111), BGR(0,0,127) 等暗红色系
+
+**检测流水线:**
+```
+img_camera → HSV → inRange([0,30,10], [15,100,80]) → findContours
+  → 过滤 100 ≤ area ≤ 3000 → 取最大面积 → 加 offset [22,120] → loc_player
+```
+
+**代码改动:**
+| 文件 | 改动 |
+|------|------|
+| `config/config_default.yaml` | 新增 `player_arrow` 配置节 (默认 enable: false) |
+| `config/config_talery.yaml` | 新增 `player_arrow` 配置节 (enable: true) |
+| `src/engine/MapleStoryAutoLevelUp.py` | 新增 `get_player_location_by_arrow()` 方法 |
+| `src/engine/MapleStoryAutoLevelUp.py` | `run_once()` 调用链: nametag → player_arrow → party_red_bar |
+
+#### 5.1.x 原有 party_red_bar 参数 (Talery 不再使用)
+
 | # | 参数 | 当前值 | 新值 | 完成 |
 |---|------|--------|------|------|
-| 5.1.1 | party_red_bar HSV | [0,60,60]-[0,100,100] | | ⬜ |
-| 5.1.2 | party_red_bar offset | [20, 66] | | ⬜ |
+| 5.1.1 | party_red_bar HSV | [0,60,60]-[0,100,100] | (Talery 不适用) | ⬜ |
+| 5.1.2 | party_red_bar offset | [20, 66] | (Talery 不适用) | ⬜ |
 | 5.1.3 | minimap player_color | [136,255,255] | | ⬜ |
 | 5.1.4 | minimap other_player_color | [0,0,255] | | ⬜ |
 | 5.1.5 | minimap offset | [0, 0] | | ⬜ |
@@ -258,7 +294,7 @@ python -m tools.routeRecorder.py --cfg talery --new_map talery_<地图名>
 
 | 文件 | 改动内容 |
 |------|---------|
-| `config/config_talery.yaml` | 填充窗口标题、分辨率、标题栏高度; 跳过 resize; ui_y_start 调整 |
+| `config/config_talery.yaml` | 填充窗口标题、分辨率、标题栏高度; 跳过 resize; ui_y_start 调整; **新增 player_arrow 箭头定位** |
 | `config/config_data.yaml` | 新增 `talery_ant_cave_2` 地图和怪物映射 |
 | `src/utils/global_var.py` | **新增** `get_window_working_size(cfg)` 动态计算工作尺寸 |
 | `src/input/GameWindowCapturor.py` | resize_window 条件调用 — Talery 跳过 |

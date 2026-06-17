@@ -1,6 +1,10 @@
 import cv2
 import argparse
 import os
+import sys
+
+# Add project root to path for local imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # local import
 from src.utils.common import to_standard_hsv
@@ -10,12 +14,20 @@ def main():
     parser.add_argument("image_path", help="Path to image file")
     args = parser.parse_args()
 
-    if not os.path.exists(args.image_path):
-        print(f"[Error] File not found: {args.image_path}")
-        return
+    # Resolve image path: try as-is first, then relative to script directory
+    image_path = args.image_path
+    if not os.path.exists(image_path):
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        alt_path = os.path.join(script_dir, args.image_path)
+        if os.path.exists(alt_path):
+            image_path = alt_path
+        else:
+            print(f"[Error] File not found: {args.image_path}")
+            print(f"        Also tried: {alt_path}")
+            return
 
     # Load image in BGR
-    img = cv2.imread(args.image_path)
+    img = cv2.imread(image_path)
     if img is None:
         print("[Error] Failed to load image.")
         return
