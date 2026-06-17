@@ -1,23 +1,26 @@
-# ====== Talery Server Configuration ======
-# This config overrides config_default.yaml for Talery server
-# Run with: python -m src.main (then select config_talery.yaml in UI)
-# Or: python -m src.engine.MapleStoryAutoLevelUp --cfg talery
-
-system:
-  server: "Talery"         # 服务器标识
-
+bot:
+  attack: aoe_skill
+  map: talery_ant_cave_2
 game_window:
-  title: "TaleryMS"           # Talery窗口标题token (含动态后缀如 TaleryMS-30ms-100)
-  size: [720, 1282]           # 内容区尺寸 [高, 宽] (裁剪27px标题栏后 = 747-27)
-  title_bar_height: 27        # 标题栏高度 (实测: 747-720=27, 含边框阴影)
-  window_width: 0             # 0=不强制resize (Talery不支持手动调窗口)
-  window_height: 0            # 0=不强制resize
-
-ui_coords:
-  ui_y_start: 724             # 游戏画面区高度 (debug窗口显示此值之上; 可自行调节: 看到HP/MP栏出现即止)
-
+  size:
+  - 720
+  - 1282
+  title: TaleryMS
+  title_bar_height: 27
+  window_height: 0
+  window_width: 0
+health_monitor:
+  add_hp_percent: 0
+  add_mp_percent: 0
+key:
+  aoe_skill: a
+  directional_attack: ''
+  jump: alt
 rune:
-  enable: false               # 🚫 Talery 无符文系统，完全关闭
-
+  enable: false
+system:
+  server: Talery
 talery_anti_cheat:
-  enable: false               # 🚫 待实际遇到校验机制后再开启并填入参数
+  enable: false
+ui_coords:
+  ui_y_start: 724
