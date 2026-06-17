@@ -37,24 +37,136 @@
 
 ## 二、改造阶段划分
 
-### 🏗️ 阶段一: 基础环境适配 (预计 1 天)
+### 🏗️ 阶段一: 基础环境适配 - 分辨率改造 (预计 1~2 天)
 
-**目标**: 让项目能识别 Talery 游戏窗口并启动基础功能
+**目标**: 让项目在 Talery 的固定分辨率下正常工作
 
-| 步骤 | 任务 | 涉及文件 | 状态 |
-|------|------|---------|------|
-| 1.1 | 获取 Talery 窗口标题和分辨率 | 启动游戏→用SPY++或pygetwindow获取 | ⬜ 待做 |
-| 1.2 | 创建 Talery 专用配置文件 | 新建 `config/config_talery.yaml` | ⬜ 待做 |
-| 1.3 | 更新 `game_window.title` 和 `game_window.size` | 修改配置 | ⬜ 待做 |
-| 1.4 | 更新 `WINDOW_WORKING_SIZE` | `src/utils/global_var.py` | ⬜ 待做 |
-| 1.5 | 更新 `ui_coords` 所有按钮坐标 | 截图测量 | ⬜ 待做 |
-| 1.6 | 更新 `system.server` 为 Talery 标识 | 配置文件 | ⬜ 待做 |
-| 1.7 | 验证窗口截图功能正常 | 启动引擎→观察调试窗口 | ⬜ 待做 |
+> ⚠️ **关键差异**: Talery 不支持手动调整窗口分辨率(不能调用 `win32gui.MoveWindow`)，只能从游戏内提供的几个固定分辨率中选择一个。Artale 则将窗口强制调整为 1296×759。
+
+#### 1.0 分辨率硬编码依赖全景图
+
+整个项目的视觉处理基于严格的分辨率假设链，需要从以下 7 处硬编码中解耦：
+
+| # | 硬编码值 | 说明 | 位置 |
+|---|---------|------|------|
+| ① | `1296, 759` | resize_window 目标尺寸 | `GameWindowCapturor.py:40` |
+| ② | `1296, 759` | 切频道重连后 resize | `MapleStoryAutoLevelUp.py:1258` |
+| ③ | `59` px | 标题栏裁剪高度 | `config_default.yaml:307` → `get_img_frame()` |
+| ④ | `[693, 1282]` | 内容区期望尺寸校验 | `config_default.yaml:305` → `get_img_frame()` 每帧校验 |
+| ⑤ | `(1296, 700)` | cv2.resize 目标尺寸 | `global_var.py:3` → `get_img_frame()` 和 `routeRecorder.py` |
+| ⑥ | `(693, 1282)` | normalize 标准尺寸 | `common.py:816` → `normalize_pixel_coordinate()` |
+| ⑦ | 所有 `ui_coords` 坐标 | 按钮点击坐标 | `config_default.yaml` → `channel_change()` 等 |
+
+数据流链：
+```
+resize_window(1296,759) → 截图 → 裁剪 title_bar_height(59) → 校验 size[693,1282]
+  → cv2.resize 到 WINDOW_WORKING_SIZE(1296,700) → 所有 CV 操作基于此尺寸
+  → UI 坐标也基于此尺寸 → click_in_game_window 加上 title_bar_height 偏移
+```
+
+#### 1.1 改造步骤
+
+| 步骤 | 任务 | 涉及文件 | 改造内容 | 状态 |
+|------|------|---------|---------|------|
+| 1.1.1 | 确定 Talery 可用分辨率 | 启动游戏查看设置 | 记录游戏内可选分辨率列表，选择一个 16:9 的分辨率 | ⬜ |
+| 1.1.2 | 截图测量各尺寸参数 | 截图工具 | 测量：窗口总尺寸、标题栏高度、内容区尺寸(h×w) | ⬜ |
+| 1.1.3 | 填充 `config_talery.yaml` 分辨率配置 | `config/config_talery.yaml` | 更新 `game_window.title` / `size` / `title_bar_height`，新增 `window_width` / `window_height` | ⬜ |
+| 1.1.4 | 改造 `WINDOW_WORKING_SIZE` 为动态计算 | `src/utils/global_var.py` | 改为函数 `get_window_working_size(cfg)`，根据配置中 `game_window.size` 按比例缩放 | ⬜ |
+| 1.1.5 | 改造 `resize_window` 调用逻辑 | `src/input/GameWindowCapturor.py` | 加条件判断：配置中 `window_width>0` 时才调用 resize；Talery 配置设为 0 跳过 | ⬜ |
+| 1.1.6 | 改造引擎中 `resize_window` 调用 | `src/engine/MapleStoryAutoLevelUp.py` | 第 1258 行同样加条件判断或从配置读取尺寸 | ⬜ |
+| 1.1.7 | 改造 `get_img_frame()` 中的 WINDOW_WORKING_SIZE | `src/engine/MapleStoryAutoLevelUp.py` | 第 968 行替换为 `self.window_working_size`（从 init 中初始化） | ⬜ |
+| 1.1.8 | 改造 `normalize_pixel_coordinate` 标准尺寸 | `src/utils/common.py` | 将 `(693, 1282)` 改为从参数传入，调用方传递 `cfg["game_window"]["size"]` | ⬜ |
+| 1.1.9 | 同步改造 `routeRecorder.py` | `tools/routeRecorder.py` | 第 174 行的 resize 同样改为从配置动态获取 | ⬜ |
+| 1.1.10 | 重新测量所有 UI 坐标 | 截图→标注坐标 | 更新 `config_talery.yaml` 中所有 `ui_coords` 值 | ⬜ |
+| 1.1.11 | 重新测量符文相关坐标 | 截图→标注坐标 | 更新 rune_warning/rune_enable/rune_solver 坐标（即使符文关闭，保留配置完整性） | ⬜ |
+| 1.1.12 | 验证窗口截图功能正常 | 启动引擎→观察调试窗口 | 确认截图尺寸、小地图检测、玩家定位正常 | ⬜ |
+
+#### 1.2 配置变更说明 (`config_talery.yaml`)
+
+```yaml
+game_window:
+  title: "<Talery实际窗口标题>"    # 1.1.1 获取
+  size: [<H>, <W>]                 # 1.1.2 测量：内容区高度×宽度
+  title_bar_height: <N>            # 1.1.2 测量：标题栏像素高度
+  window_width: <W2>               # 新增：窗口总宽度(含边框)，若不需 resize 则填 0
+  window_height: <H2>              # 新增：窗口总高度(含标题栏)，若不需 resize 则填 0
+  ratio_tolerance: 0.08            # 保持，用于 aux 模式的 16:9 检查
+```
+
+#### 1.3 代码改造模板
+
+**`global_var.py` 改为函数**：
+```python
+# 原: WINDOW_WORKING_SIZE = (1296, 700)
+# 改为函数:
+def get_window_working_size(cfg):
+    """根据配置动态计算内部工作尺寸，保持宽度约 1296 基准"""
+    h, w = cfg["game_window"]["size"]
+    target_w = cfg.get("game_window", {}).get("working_width", 1296)
+    scale = target_w / w
+    target_h = int(h * scale)
+    return (target_w, target_h)
+```
+
+**`GameWindowCapturor.py:40` 条件化 resize**：
+```python
+# 原:
+resize_window(self.window_title, width=1296, height=759)
+# 改为:
+win_w = cfg.get("game_window", {}).get("window_width", 0)
+win_h = cfg.get("game_window", {}).get("window_height", 0)
+if win_w > 0 and win_h > 0:
+    resize_window(self.window_title, width=win_w, height=win_h)
+else:
+    logger.info("[Talery] Using native resolution — resize_window skipped")
+```
+
+**`MapleStoryAutoLevelUp.py` init 中初始化工作尺寸**：
+```python
+from src.utils.global_var import get_window_working_size
+self.window_working_size = get_window_working_size(cfg)
+```
+
+**`MapleStoryAutoLevelUp.py:968` 替换**：
+```python
+# 原: cv2.resize(frame_no_title, WINDOW_WORKING_SIZE, ...)
+# 改为:
+cv2.resize(frame_no_title, self.window_working_size, ...)
+```
+
+**`common.py:811` normalize 改为参数化**：
+```python
+def normalize_pixel_coordinate(coord, window_size, std_size=None):
+    if std_size is None:
+        std_size = (693, 1282)  # 默认兼容 Artale
+    h_win, w_win = window_size
+    h_std, w_std = std_size
+    ...
+```
 
 **关键文件清单**:
-- `config/config_talery.yaml` (新建)
-- `src/utils/global_var.py` (修改 WINDOW_WORKING_SIZE)
-- `config/config_default.yaml` (参考，不直接修改)
+- `config/config_talery.yaml` — 填充真实分辨率参数
+- `src/utils/global_var.py` — `WINDOW_WORKING_SIZE` 改为函数
+- `src/input/GameWindowCapturor.py` — 条件化 resize 调用
+- `src/engine/MapleStoryAutoLevelUp.py` — 初始化 + get_img_frame 替换
+- `src/utils/common.py` — normalize_pixel_coordinate 参数化
+- `tools/routeRecorder.py` — 同步适配
+
+#### 1.4 对 routeRecorder 的影响分析
+
+`routeRecorder.py` 的 `get_img_frame()` (第 157-175 行) 与引擎中的逻辑几乎相同：
+- 同样裁剪 `title_bar_height`、校验 `game_window.size`、resize 到 `WINDOW_WORKING_SIZE`
+- **小地图拼接算法本身与分辨率无关** (通过白色边框连通区域检测定位)，只需帧被正确 resize
+- 改造方案：复用上述 `global_var.py` 的函数化改造，同步替换 `WINDOW_WORKING_SIZE` 引用
+
+#### 1.5 风险与缓解
+
+| 风险 | 影响 | 缓解措施 |
+|------|------|---------|
+| `get_minimap_loc_size` 白色边框粗细不同 | 小地图定位失败 | 算法基于连通区域面积过滤(≥100px)，不依赖固定尺寸 |
+| 玩家点颜色 (136,255,255) 不同 | 玩家定位失败 | 需实测后更新 `minimap.player_color` 配置 |
+| 怪物模板匹配率下降 | 怪物检测不准 | 若分辨率差异大，需用 `mob_maker.py` 重新截取模板 |
+| 不同分辨率下 CV 阈值敏感 | 误检/漏检 | 先选一个分辨率跑通，后续可支持多分辨率 |
 
 ---
 

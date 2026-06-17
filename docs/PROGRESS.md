@@ -1,7 +1,7 @@
 # Talery 迁移改造进度跟踪
 
-> 📅 创建: 2026-06-16 | 🔄 最后更新: 2026-06-16
-> 🎯 总体进度: 2/7 阶段完成 (阶段一跳过, 阶段二完成)
+> 📅 创建: 2026-06-16 | 🔄 最后更新: 2026-06-17
+> 🎯 总体进度: 2/7 阶段完成 (阶段二完成; 阶段一×分辨率,细化后重新排入)
 
 ---
 
@@ -9,7 +9,7 @@
 
 | 阶段 | 内容 | 预计天数 | 状态 | 完成步骤 |
 |------|------|---------|------|---------|
-| 一 | 基础环境适配 | 1天 | ⏭️ 已跳过 | 0/7 |
+| 一 | 分辨率适配改造 | 1~2天 | 🔴 进行中 | 0/12 |
 | 二 | 符文关闭+校验框架 | 2天 | ✅ 已完成 | 8/8 |
 | 三 | 地图与路线验证 | 2天 | ⬜ 未开始 | 0/22 |
 | 四 | 怪物图集验证 | 1天 | ⬜ 未开始 | 0/18 |
@@ -17,21 +17,56 @@
 | 六 | 校验机制适配 | 待定 | ⬜ 未开始 | 0/6 |
 | 七 | 集成测试 | 3天 | ⬜ 未开始 | 0/5 |
 
-**总体进度: 0%** (0/78 步骤完成)
+**总体进度: 9%** (8/90 步骤完成: 阶段二8/8 + 阶段一分析完成)
 
 ---
 
-## 阶段一: 基础环境适配
+## 阶段一: 分辨率适配改造 (重新细化)
+
+> ⚠️ Talery 不支持手动调分辨率 → 需要从代码中解耦所有 1296×759 硬编码
+> 
+> 📊 **分析已完成** (2026-06-17): 发现 7 处硬编码依赖，详见 TALERY_MIGRATION_PLAN.md §1.0
+
+#### 1.1 信息收集
 
 | # | 任务 | 完成日期 | 备注 |
 |---|------|---------|------|
-| 1.1 | 获取 Talery 窗口标题和分辨率 | ⬜ | |
-| 1.2 | 创建 `config/config_talery.yaml` | ⬜ | |
-| 1.3 | 更新 game_window 配置 | ⬜ | |
-| 1.4 | 更新 WINDOW_WORKING_SIZE | ⬜ | |
-| 1.5 | 更新 ui_coords 坐标 | ⬜ | |
-| 1.6 | 更新 system.server | ⬜ | |
-| 1.7 | 验证窗口截图功能 | ⬜ | |
+| 1.1.1 | 确认 Talery 窗口标题 | ⬜ | 启动游戏后用 SPY++ 或 pygetwindow 查看 |
+| 1.1.2 | 列出游戏内可选分辨率 | ⬜ | 打开游戏设置→查看分辨率选项 |
+| 1.1.3 | 截图测量窗口/内容区/标题栏尺寸 | ⬜ | 选择 16:9 分辨率后截图 |
+| 1.1.4 | 测量所有 UI 按钮坐标 | ⬜ | menu/channel/random_channel/login_button 等 |
+| 1.1.5 | 测量符文相关 UI 坐标 | ⬜ | rune_warning/rune_enable/rune_solver (即使关闭,保留完整性) |
+
+#### 1.2 配置文件更新
+
+| # | 任务 | 涉及文件 | 完成日期 | 备注 |
+|---|------|---------|---------|------|
+| 1.2.1 | 更新 `game_window.title` | `config/config_talery.yaml` | ⬜ | |
+| 1.2.2 | 更新 `game_window.size` | `config/config_talery.yaml` | ⬜ | 内容区 [H, W] |
+| 1.2.3 | 更新 `game_window.title_bar_height` | `config/config_talery.yaml` | ⬜ | |
+| 1.2.4 | 新增 `window_width`/`window_height` | `config/config_talery.yaml` | ⬜ | Talery 填 0 表示不强制 resize |
+| 1.2.5 | 更新所有 `ui_coords` 向坐标 | `config/config_talery.yaml` | ⬜ | |
+| 1.2.6 | 更新符文相关坐标 | `config/config_talery.yaml` | ⬜ | |
+
+#### 1.3 代码改造
+
+| # | 任务 | 涉及文件 | 改造内容 | 完成日期 | 备注 |
+|---|------|---------|---------|---------|------|
+| 1.3.1 | 动态计算工作尺寸 | `src/utils/global_var.py` | `WINDOW_WORKING_SIZE` 常量→ `get_window_working_size(cfg)` 函数 | ⬜ | |
+| 1.3.2 | 条件化 resize 调用 | `src/input/GameWindowCapturor.py:40` | `window_width>0` 时才调用 resize, Talery 跳过 | ⬜ | |
+| 1.3.3 | 条件化 resize 调用 | `src/engine/MapleStoryAutoLevelUp.py:1258` | 切频道重连时同样处理 | ⬜ | |
+| 1.3.4 | 替换 WINDOW_WORKING_SIZE | `src/engine/MapleStoryAutoLevelUp.py:968` | 用 `self.window_working_size` | ⬜ | init 中初始化 |
+| 1.3.5 | 参数化 normalize | `src/utils/common.py:816` | `(693,1282)` → 从参数或配置传入 | ⬜ | |
+| 1.3.6 | 同步改造 routeRecorder | `tools/routeRecorder.py:174` | 同样替换 WINDOW_WORKING_SIZE 引用 | ⬜ | |
+
+#### 1.4 验证
+
+| # | 任务 | 完成日期 | 备注 |
+|---|------|---------|------|
+| 1.4.1 | 启动引擎+确认截图尺寸正确 | ⬜ | 观察调试窗口尺寸 |
+| 1.4.2 | 确认小地图检测 (get_minimap_loc_size) 正常 | ⬜ | |
+| 1.4.3 | 确认玩家定位 (黄色点) 正常 | ⬜ | 若颜色不同需更新 minimap.player_color |
+| 1.4.4 | 确认 routeRecorder 录制正常 | ⬜ | 跑一小段路→按 F4 保存 map.png |
 
 ---
 
